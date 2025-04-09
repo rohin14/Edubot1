@@ -12,12 +12,12 @@ pypdf==3.17.1
 sentence-transformers==2.2.2
 faiss-cpu==1.7.4
 
-# Deep learning
-torch==2.1.2
+# Deep learning - updated for compatibility
+torch==2.2.0
 transformers==4.36.2
 
 # Utility packages
 python-dotenv==1.0.0
 
 # Optional: For better Hugging Face Hub integration
-huggingface_hub[hf_xet]
+huggingface-hub
