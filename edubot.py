@@ -5,19 +5,14 @@ import warnings
 from langchain_groq import ChatGroq
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader
-from langchain_community.vectorstores import FAISS
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.prompts import ChatPromptTemplate
+from langchain_community.vectorstores import SKLearnVectorStore
+from langchain_community.embeddings import HuggingFaceEmbeddings
 
 # Suppress warnings
 warnings.filterwarnings("ignore")
-
-# Initialize embedding function - import only when needed to avoid path issues
-@st.cache_resource
-def get_embeddings():
-    from langchain_community.embeddings import HuggingFaceEmbeddings
-    return HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
 
 # App title and configuration
 st.set_page_config(page_title="Educational RAG App", page_icon="📚", layout="wide")
@@ -76,9 +71,14 @@ def process_pdfs(pdf_files):
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=100)
         splits = text_splitter.split_documents(all_docs)
         try:
-            # Get embeddings using the cached function
-            embeddings = get_embeddings()
-            vectorstore = FAISS.from_documents(splits, embeddings)
+            # Using HuggingFace embeddings with scikit-learn
+            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            
+            # Using SKLearnVectorStore instead of FAISS
+            vectorstore = SKLearnVectorStore.from_documents(
+                documents=splits,
+                embedding=embeddings
+            )
             st.success(f"✅ Created embeddings for {len(splits)} text chunks")
             return vectorstore, uploaded_filenames
         except Exception as e:
@@ -92,7 +92,7 @@ def process_pdfs(pdf_files):
 uploaded_pdfs = st.file_uploader("Upload PDF Textbooks", type="pdf", accept_multiple_files=True)
 
 # Process button
-if uploaded_pdfs and st.button("Process Textbooks"):
+if uploaded_pdfs and st.button("Process Textbooks", key="process_btn"):
     vectorstore, filenames = process_pdfs(uploaded_pdfs)
     if vectorstore:
         st.session_state.vectorstore = vectorstore
